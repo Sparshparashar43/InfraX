@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AAC Impact Simulator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>AAC Impact Simulator</h1>
+        
+        <form id="simulatorForm">
+            <label for="sqft">Enter Building Size (sq. ft):</label>
+            <input type="number" id="sqft" required>
+            <button type="submit">Calculate Impact</button>
+        </form>
+
+        <div class="results-container">
+            <div class="result-card">
+                <h3>Cost Savings</h3>
+                <p>₹<span id="cost_savings"></span></p>
+            </div>
+            <div class="result-card">
+                <h3>Time Saved</h3>
+                <p><span id="time_savings"></span> days</p>
+            </div>
+            <div class="result-card">
+                <h3>CO₂ Reduction</h3>
+                <p><span id="co2_reduction"></span> kg</p>
+            </div>
+            <div class="result-card">
+                <h3>Dealer Profit (AAC)</h3>
+                <p>₹<span id="dealer_profit_aac"></span></p>
+            </div>
+            <div class="result-card">
+                <h3>Dealer Profit (Red Brick)</h3>
+                <p>₹<span id="dealer_profit_red"></span></p>
+            </div>
+        </div>
+
+        <div class="graph-container">
+            <h3>Cost Savings Comparison</h3>
+            <canvas id="barChart"></canvas>
+        </div>
+
+        <div class="graph-container">
+            <h3>AAC Adoption Heatmap</h3>
+            <div id="heatmap"></div>
+        </div>
+
+        <div class="graph-container">
+            <h3>Spider Matrix Comparison</h3>
+            <div id="spiderMatrix"></div>
+        </div>
+
+        <div class="qr-code">
+            <h3>Scan to Try on Your Phone:</h3>
+            <img src="static/qrcode.png" alt="Scan QR to Access Simulator">
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('simulatorForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            let sqft = document.getElementById('sqft').value;
+
+            const response = await fetch('/calculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sqft: sqft })
+            });
+
+            const data = await response.json();
+
+            document.getElementById('cost_savings').innerText = data.cost_savings;
+            document.getElementById('time_savings').innerText = data.time_savings;
+            document.getElementById('co2_reduction').innerText = data.co2_reduction;
+            document.getElementById('dealer_profit_aac').innerText = data.dealer_profit_aac;
+            document.getElementById('dealer_profit_red').innerText = data.dealer_profit_red;
+
+            // Bar Chart
+            new Chart(document.getElementById('barChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Cost Savings', 'Time Saved', 'CO₂ Reduction', 'Dealer Profit (AAC)', 'Dealer Profit (Red Brick)'],
+                    datasets: [{
+                        label: 'Impact Data',
+                        data: [data.cost_savings, data.time_savings, data.co2_reduction, data.dealer_profit_aac, data.dealer_profit_red],
+                        backgroundColor: ['#ff8c00', '#d76b00', '#ff4500', '#ffa500', '#ff6347'],
+                    }]
+                }
+            });
+
+            // Heatmap
+            Plotly.newPlot('heatmap', [{
+                z: [[1, 5, 10], [2, 6, 15], [3, 9, 20]],
+                x: ['Region A', 'Region B', 'Region C'],
+                y: ['2022', '2023', '2024'],
+                type: 'heatmap'
+            }]);
+
+            // Spider Matrix
+            Plotly.newPlot('spiderMatrix', [{
+                type: 'scatterpolar',
+                r: [data.cost_savings, data.time_savings, data.co2_reduction, data.dealer_profit_aac, data.dealer_profit_red],
+                theta: ['Cost Savings', 'Time Saved', 'CO₂ Reduction', 'Dealer Profit (AAC)', 'Dealer Profit (Red Brick)'],
+                fill: 'toself'
+            }]);
+        });
+    </script>
+</body>
+</html>

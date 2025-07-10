@@ -1,0 +1,8 @@
+flask
+gunicorn
+plotly
+numpy
+matplotlib
+pandas
+seaborn
+qrcode
